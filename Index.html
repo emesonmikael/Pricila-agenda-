@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricila Manicure e Pedicure</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background-color: #fff5f8;
+      color: #333;
+      line-height: 1.6;
+    }
+    header {
+      background-color: #f8c8dc;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      color: #944b74;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .slogan {
+      font-size: 1.1rem;
+      color: #663352;
+    }
+    .admin-area {
+      background: #fce4ef;
+      padding: 0.8rem 2rem;
+      font-size: 0.9rem;
+      color: #7a4063;
+      border-bottom: 1px solid #f0c6db;
+    }
+    main {
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+    h2 {
+      color: #944b74;
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+    .como-funciona {
+      background: #fff;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .form-agendamento {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      background-color: #d678a8;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #b85e8f;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pricila Manicure e Pedicure</h1>
+    <p class="slogan">Cuidando da sua beleza com carinho</p>
+  </header>
+
+  <div class="admin-area">
+    Área Administrativa
+  </div>
+
+  <main>
+    <h2>Agendar Horário</h2>
+
+    <div class="como-funciona">
+      <h3>Como funciona:</h3>
+      <p>Preencha o formulário abaixo para agendar seu horário! ✓ Online</p>
+    </div>
+
+    <form class="form-agendamento">
+      <label for="nome">Nome Completo:</label>
+      <input type="text" id="nome" name="nome" required>
+
+      <label for="telefone">Telefone:</label>
+      <input type="tel" id="telefone" name="telefone" placeholder="(00) 00000-0000" required>
+
+      <label for="data">Data desejada:</label>
+      <input type="date" id="data" name="data" required>
+
+      <label for="hora">Horário:</label>
+      <input type="time" id="hora" name="hora" required>
+
+      <button type="submit">Agendar</button>
+    </form>
+  </main>
+
+  <script>
+// Dados da Pricila - EDITE AQUI O NÚMERO DO WHATSAPP
+const DADOS_PROFISSIONAL = {
+  nome: "Pricila",
+  whatsapp: "5584999998888" // COLOQUE SEU NÚMERO AQUI COM DDD E CÓDIGO DO PAÍS (55 = Brasil)
+};
+
+// Carrega agendamentos salvos
+let agendamentos = JSON.parse(localStorage.getItem("agendamentos_pricila")) || [];
+
+// Formulário
+const form = document.querySelector(".form-agendamento");
+
+form.addEventListener("submit", function(e) {
+  e.preventDefault(); // Não recarrega a página
+
+  // Pegar valores
+  const nome = document.getElementById("nome").value.trim();
+  const telefone = document.getElementById("telefone").value.trim();
+  const data = document.getElementById("data").value;
+  const hora = document.getElementById("hora").value;
+
+  // Validação básica
+  if (!nome || !telefone || !data || !hora) {
+    alert("⚠️ Preencha todos os campos!");
+    return;
+  }
+
+  // Verifica se horário já está ocupado
+  const horarioOcupado = agendamentos.some(ag => ag.data === data && ag.hora === hora);
+  if (horarioOcupado) {
+    alert("❌ Esse horário já está marcado! Escolha outro.");
+    return;
+  }
+
+  // Montar agendamento
+  const novoAgendamento = { nome, telefone, data, hora, dataHora: new Date().toISOString() };
+  agendamentos.push(novoAgendamento);
+
+  // Salva no navegador
+  localStorage.setItem("agendamentos_pricila", JSON.stringify(agendamentos));
+
+  // Mensagem para WhatsApp
+  const mensagem = `Olá ${DADOS_PROFISSIONAL.nome}!%0A%0ANovo agendamento:%0ANome: ${nome}%0ATelefone: ${telefone}%0AData: ${new Date(data).toLocaleDateString('pt-BR')}%0AHorário: ${hora}`;
+  
+  // Abrir WhatsApp
+  window.open(`https://wa.me/${DADOS_PROFISSIONAL.whatsapp}?text=${mensagem}`, "_blank");
+
+  // Confirmação
+  alert("✅ Agendamento feito com sucesso! Você receberá confirmação no WhatsApp.");
+  form.reset();
+});
+
+// Função: ver agendamentos (área administrativa)
+function verAgendamentos() {
+  if (agendamentos.length === 0) {
+    alert("📋 Nenhum agendamento cadastrado ainda.");
+    return;
+  }
+
+  let lista = "📅 AGENDAMENTOS PRICILA\n\n";
+  agendamentos.forEach((ag, i) => {
+    lista += `${i+1}. ${new Date(ag.data).toLocaleDateString('pt-BR')} às ${ag.hora}\nCliente: ${ag.nome}\nTel: ${ag.telefone}\n\n`;
+  });
+
+  alert(lista);
+}
+
+// Adiciona botão administrativo
+const adminArea = document.querySelector(".admin-area");
+const btnAdmin = document.createElement("button");
+btnAdmin.textContent = "Ver Meus Agendamentos";
+btnAdmin.style = "background:#944b74; color:white; border:none; padding:6px 12px; border-radius:4px; margin-top:8px; cursor:pointer;";
+btnAdmin.onclick = verAgendamentos;
+adminArea.appendChild(btnAdmin);
+  </script>
+</body>
+</html>
