@@ -47,12 +47,28 @@
       margin-bottom: 1rem;
       font-size: 1.4rem;
     }
-    .como-funciona {
+    .como-funciona, .servicos {
       background: #fff;
       padding: 1.2rem;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
       margin-bottom: 1.5rem;
+    }
+    .lista-servicos {
+      list-style: none;
+    }
+    .lista-servicos li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f8c8dc80;
+      display: flex;
+      justify-content: space-between;
+    }
+    .lista-servicos li:last-child {
+      border-bottom: none;
+    }
+    .valor {
+      color: #944b74;
+      font-weight: bold;
     }
     .form-agendamento {
       background: #fff;
@@ -87,6 +103,12 @@
     button:hover {
       background-color: #b85e8f;
     }
+    .aviso {
+      color: #944b74;
+      font-size: 0.9rem;
+      margin: 8px 0;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -97,17 +119,45 @@
 
   <div class="admin-area">
     Área Administrativa
+    <p style="margin-top:4px; font-size:12px;">Todos os agendamentos vão direto para sua Planilha Google 📊</p>
   </div>
 
   <main>
+    <!-- INDEX DE SERVIÇOS -->
+    <section class="servicos">
+      <h2>📋 Index de Serviços</h2>
+      <ul class="lista-servicos">
+        <li>
+          <span>Manicure e Pedicure</span>
+          <span class="valor">R$ 50,00</span> <!-- Alterar valor aqui -->
+        </li>
+        <li>
+          <span>SPA dos pés</span>
+          <span class="valor">R$ 60,00</span> <!-- Alterar valor aqui -->
+        </li>
+        <li>
+          <span>Alongamento molde F1</span>
+          <span class="valor">R$ 140,00</span> <!-- Alterar valor aqui -->
+        </li>
+        <li>
+          <span>Manutenção</span>
+          <span class="valor">R$ 90,00</span> <!-- Alterar valor aqui -->
+        </li>
+        <li>
+          <span>Esmaltação em gel</span>
+          <span class="valor">R$ 45,00</span> <!-- Alterar valor aqui -->
+        </li>
+      </ul>
+    </section>
+
     <h2>Agendar Horário</h2>
 
     <div class="como-funciona">
       <h3>Como funciona:</h3>
-      <p>Preencha o formulário abaixo para agendar seu horário! ✓ Online</p>
+      <p>Preencha o formulário abaixo para agendar seu horário! ✓ Online ✓ Confirmado por WhatsApp</p>
     </div>
 
-    <form class="form-agendamento">
+    <form class="form-agendamento" id="formAgendamento">
       <label for="nome">Nome Completo:</label>
       <input type="text" id="nome" name="nome" required>
 
@@ -120,25 +170,25 @@
       <label for="hora">Horário:</label>
       <input type="time" id="hora" name="hora" required>
 
+      <p class="aviso">⚠️ Se o horário já estiver ocupado, entraremos em contato para remarcar</p>
+
       <button type="submit">Agendar</button>
     </form>
   </main>
 
   <script>
-// Dados da Pricila - EDITE AQUI O NÚMERO DO WHATSAPP
+// DADOS DA PRICILA - CONFIGURAÇÕES
 const DADOS_PROFISSIONAL = {
   nome: "Pricila",
-  whatsapp: "5584996169912" // COLOQUE SEU NÚMERO AQUI COM DDD E CÓDIGO DO PAÍS (55 = Brasil)
+  whatsapp: "5584996169912", // COLOQUE SEU NÚMERO COM DDD E 55 (BRASIL)
+  linkPlanilha: "https://script.google.com/macros/s/AKfycbyxxaTqBlGaCPO-B303mVwcSnYQNNeGnKhB34aBlVlOabGB5ArMPZXYREllUEON7hIZqg/exec" // <====== COLE O LINK AQUI !!!
 };
 
-// Carrega agendamentos salvos
-let agendamentos = JSON.parse(localStorage.getItem("agendamentos_pricila")) || [];
-
 // Formulário
-const form = document.querySelector(".form-agendamento");
+const form = document.getElementById("formAgendamento");
 
 form.addEventListener("submit", function(e) {
-  e.preventDefault(); // Não recarrega a página
+  e.preventDefault();
 
   // Pegar valores
   const nome = document.getElementById("nome").value.trim();
@@ -146,59 +196,36 @@ form.addEventListener("submit", function(e) {
   const data = document.getElementById("data").value;
   const hora = document.getElementById("hora").value;
 
-  // Validação básica
   if (!nome || !telefone || !data || !hora) {
     alert("⚠️ Preencha todos os campos!");
     return;
   }
 
-  // Verifica se horário já está ocupado
-  const horarioOcupado = agendamentos.some(ag => ag.data === data && ag.hora === hora);
-  if (horarioOcupado) {
-    alert("❌ Esse horário já está marcado! Escolha outro.");
-    return;
-  }
+  // Montar dados para enviar
+  const dadosEnviar = { nome, telefone, data, hora };
 
-  // Montar agendamento
-  const novoAgendamento = { nome, telefone, data, hora, dataHora: new Date().toISOString() };
-  agendamentos.push(novoAgendamento);
+  // Enviar para Planilha Google
+  fetch(DADOS_PROFISSIONAL.linkPlanilha, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(dadosEnviar)
+  })
+  .then(() => {
+    // Mensagem WhatsApp
+    const mensagem = `Olá ${DADOS_PROFISSIONAL.nome}!%0A%0ANovo agendamento:%0ANome: ${nome}%0ATelefone: ${telefone}%0AData: ${new Date(data).toLocaleDateString('pt-BR')}%0AHorário: ${hora}`;
+    window.open(`https://wa.me/${DADOS_PROFISSIONAL.whatsapp}?text=${mensagem}`, "_blank");
 
-  // Salva no navegador
-  localStorage.setItem("agendamentos_pricila", JSON.stringify(agendamentos));
-
-  // Mensagem para WhatsApp
-  const mensagem = `Olá ${DADOS_PROFISSIONAL.nome}!%0A%0ANovo agendamento:%0ANome: ${nome}%0ATelefone: ${telefone}%0AData: ${new Date(data).toLocaleDateString('pt-BR')}%0AHorário: ${hora}`;
-  
-  // Abrir WhatsApp
-  window.open(`https://wa.me/${DADOS_PROFISSIONAL.whatsapp}?text=${mensagem}`, "_blank");
-
-  // Confirmação
-  alert("✅ Agendamento feito com sucesso! Você receberá confirmação no WhatsApp.");
-  form.reset();
-});
-
-// Função: ver agendamentos (área administrativa)
-function verAgendamentos() {
-  if (agendamentos.length === 0) {
-    alert("📋 Nenhum agendamento cadastrado ainda.");
-    return;
-  }
-
-  let lista = "📅 AGENDAMENTOS PRICILA\n\n";
-  agendamentos.forEach((ag, i) => {
-    lista += `${i+1}. ${new Date(ag.data).toLocaleDateString('pt-BR')} às ${ag.hora}\nCliente: ${ag.nome}\nTel: ${ag.telefone}\n\n`;
+    alert("✅ Agendamento enviado com sucesso! Você receberá confirmação no WhatsApp.");
+    form.reset();
+  })
+  .catch(erro => {
+    alert("❌ Erro ao agendar: " + erro + "\nTente novamente ou entre em contato por WhatsApp.");
   });
 
-  alert(lista);
-}
-
-// Adiciona botão administrativo
-const adminArea = document.querySelector(".admin-area");
-const btnAdmin = document.createElement("button");
-btnAdmin.textContent = "Ver Meus Agendamentos";
-btnAdmin.style = "background:#944b74; color:white; border:none; padding:6px 12px; border-radius:4px; margin-top:8px; cursor:pointer;";
-btnAdmin.onclick = verAgendamentos;
-adminArea.appendChild(btnAdmin);
+});
   </script>
 </body>
 </html>
